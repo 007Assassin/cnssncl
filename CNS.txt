@@ -1,0 +1,251 @@
+//6
+import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
+import java.util.Base64;
+import java.util.Scanner;
+
+public class AESExample {
+
+    public static SecretKey generateKey() throws Exception {
+        KeyGenerator keyGenerator = KeyGenerator.getInstance("AES");
+        keyGenerator.init(128);
+        return keyGenerator.generateKey();
+    }
+
+    public static String encrypt(String text, SecretKey key) throws Exception {
+        Cipher cipher = Cipher.getInstance("AES");
+        cipher.init(Cipher.ENCRYPT_MODE, key);
+        return Base64.getEncoder().encodeToString(cipher.doFinal(text.getBytes()));
+    }
+
+    public static String decrypt(String encrypted, SecretKey key) throws Exception {
+        Cipher cipher = Cipher.getInstance("AES");
+        cipher.init(Cipher.DECRYPT_MODE, key);
+        return new String(cipher.doFinal(Base64.getDecoder().decode(encrypted)));
+    }
+
+    public static void main(String[] args) throws Exception {
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("Enter the text to encrypt: "); 
+        String text = scanner.nextLine(); 
+        SecretKey key = generateKey();
+        String encrypted = encrypt(text, key);
+        System.out.println("Encrypted: " + encrypted);
+        String decrypted = decrypt(encrypted, key);
+        System.out.println("Decrypted: " + decrypted);
+        scanner.close();
+    }
+}
+
+
+//7 RSA
+import java.math.BigInteger;
+import java.util.Scanner;
+
+public class RSAFullInput {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+
+        // Input two prime numbers
+        System.out.print("Enter first prime number (p): ");
+        BigInteger p = new BigInteger(sc.nextLine());
+
+        System.out.print("Enter second prime number (q): ");
+        BigInteger q = new BigInteger(sc.nextLine());
+
+        // Calculate n = p * q and φ(n) = (p-1)*(q-1)
+        BigInteger n = p.multiply(q);
+        BigInteger phi = (p.subtract(BigInteger.ONE)).multiply(q.subtract(BigInteger.ONE));
+
+        // Input e (public exponent)
+        BigInteger e;
+        while (true) {
+            System.out.print("Enter public key exponent (e): ");
+            e = new BigInteger(sc.nextLine());
+            if (e.gcd(phi).equals(BigInteger.ONE) && e.compareTo(phi) < 0) {
+                break;
+            }
+            System.out.println("Invalid e. Try again (must be 1 < e < φ(n), and gcd(e, φ(n)) = 1)");
+        }
+
+        // Compute d (private key exponent)
+        BigInteger d = e.modInverse(phi);
+
+        // Show public and private keys
+        System.out.println("\nPublic Key (e, n): (" + e + ", " + n + ")");
+        System.out.println("Private Key (d, n): (" + d + ", " + n + ")");
+
+        // Input plaintext
+        System.out.print("\nEnter message as a number less than " + n + ": ");
+        BigInteger message = new BigInteger(sc.nextLine());
+
+        // Encrypt: C = M^e mod n
+        BigInteger cipher = message.modPow(e, n);
+        System.out.println("Encrypted Cipher Text: " + cipher);
+
+        // Decrypt: M = C^d mod n
+        BigInteger decrypted = cipher.modPow(d, n);
+        System.out.println("Decrypted Message: " + decrypted);
+
+        sc.close();
+    }
+}
+
+//8 Diffie
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Diffie-Hellman Key Exchange</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        input, button {
+            margin: 5px 0;
+            padding: 8px;
+            width: 100%;
+        }
+        .section {
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            padding: 15px;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Diffie-Hellman Key Exchange Demo</h2>
+
+    <div class="section">
+        <label>Prime number (p):</label>
+        <input type="number" id="prime" value="23">
+
+        <label>Primitive root (g):</label>
+        <input type="number" id="base" value="5">
+
+        <label>Alice's private key (a):</label>
+        <input type="number" id="alicePrivate" value="6">
+
+        <label>Bob's private key (b):</label>
+        <input type="number" id="bobPrivate" value="15">
+
+        <button onclick="computeDH()">Compute Shared Keys</button>
+    </div>
+
+    <div class="section" id="results">
+        <strong>Results:</strong>
+        <p id="alicePublic"></p>
+        <p id="bobPublic"></p>
+        <p id="aliceShared"></p>
+        <p id="bobShared"></p>
+    </div>
+
+    <script>
+        function modPow(base, exponent, mod) {
+            let result = 1;
+            base = base % mod;
+            while (exponent > 0) {
+                if (exponent % 2 === 1)
+                    result = (result * base) % mod;
+                exponent = Math.floor(exponent / 2);
+                base = (base * base) % mod;
+            }
+            return result;
+        }
+
+        function computeDH() {
+            const p = parseInt(document.getElementById("prime").value);
+            const g = parseInt(document.getElementById("base").value);
+            const a = parseInt(document.getElementById("alicePrivate").value);
+            const b = parseInt(document.getElementById("bobPrivate").value);
+
+            const A = modPow(g, a, p); // Alice's public key
+            const B = modPow(g, b, p); // Bob's public key
+
+            const sharedKeyA = modPow(B, a, p); // Alice computes shared key
+            const sharedKeyB = modPow(A, b, p); // Bob computes shared key
+
+            document.getElementById("alicePublic").innerText = `Alice's Public Key (A): ${A}`;
+            document.getElementById("bobPublic").innerText = `Bob's Public Key (B): ${B}`;
+            document.getElementById("aliceShared").innerText = `Alice's Shared Key: ${sharedKeyA}`;
+            document.getElementById("bobShared").innerText = `Bob's Shared Key: ${sharedKeyB}`;
+        }
+    </script>
+</body>
+</html>
+
+
+//9 SHA
+
+import java.security.MessageDigest;
+import java.util.Scanner;
+
+public class SHA512Digest {
+
+    public static String bytesToHex(byte[] bytes) {
+        StringBuilder hex = new StringBuilder();
+        for (byte b : bytes) {
+            hex.append(String.format("%02x", b));
+        }
+        return hex.toString();
+    }
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.print("Enter text to hash: ");
+        String input = scanner.nextLine();
+
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-512");
+            byte[] hashBytes = md.digest(input.getBytes("UTF-8"));
+            String hashHex = bytesToHex(hashBytes);
+
+            System.out.println("SHA-512 Digest:");
+            System.out.println(hashHex);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        scanner.close();
+    }
+}
+
+
+//10.MD5
+
+import java.security.MessageDigest;
+import java.util.Scanner;
+
+public class MD5Digest {
+
+    public static String bytesToHex(byte[] bytes) {
+        StringBuilder hex = new StringBuilder();
+        for (byte b : bytes) {
+            hex.append(String.format("%02x", b));
+        }
+        return hex.toString();
+    }
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.print("Enter text to hash using MD5: ");
+        String input = scanner.nextLine();
+
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            byte[] hashBytes = md.digest(input.getBytes("UTF-8"));
+            String hashHex = bytesToHex(hashBytes);
+
+            System.out.println("MD5 Digest:");
+            System.out.println(hashHex);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        scanner.close();
+    }
+}
